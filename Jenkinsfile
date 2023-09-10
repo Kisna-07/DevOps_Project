@@ -3,12 +3,17 @@ pipeline {
     
     environment {
         // Define environment variables
-        DOCKER_HUB_CREDENTIALS = credentials('docker-hub-credentials')
-        DOCKER_IMAGE_NAME = 'krushna07/project-demo'
+        DOCKER_HUB_CREDENTIALS = 'docker-hub-credentials'
+        DOCKER_IMAGE_NAME = 'krushna07/project-demo:v1'
         // TOMCAT_SERVER = 'http://20.62.44.175:8088/'
-        TOMCAT_CREDENTIALS = credentials('tomcat-credentials')
-        CUSTOM_DOCKERFILE_PATH = 'Dockerfile'  // Change this path
+        // TOMCAT_CREDENTIALS = credentials('tomcat-credentials')
+        // CUSTOM_DOCKERFILE_PATH = 'Dockerfile'  // Change this path
     }
+    tools {
+        // Install the Maven version configured as "M3" and add it to the path.
+        maven "M3"
+    }
+
 
     stages {
         stage('Checkout') {
@@ -33,9 +38,9 @@ pipeline {
                 }
                 
                 // Authenticate and push the Docker image to Docker Hub
-                withCredentials([usernamePassword(credentialsId: 'docker-hub-credentials', usernameVariable: 'krushna07', passwordVariable: 'dckr_pat_N7DI_o068iwA9pYSiLaR0MVpsuc')]) {
+                // withCredentials([usernamePassword(credentialsId: 'docker-hub-credentials', usernameVariable: 'krushna07', passwordVariable: 'dckr_pat_N7DI_o068iwA9pYSiLaR0MVpsuc')]) {
                     script {
-                        docker.withRegistry("https://registry.hub.docker.com", 'docker-hub-credentials') {
+                        docker.withRegistry("https://registry.hub.docker.com", DOCKER_HUB_CREDENTIALS) {
                             dockerImage.push("${DOCKER_IMAGE_NAME}:${BUILD_NUMBER}")
                         }
                     }
