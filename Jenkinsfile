@@ -46,8 +46,7 @@ pipeline {
                     }
                 }
             }
-        }
-        
+
         stage('Deploy to Tomcat') {
             steps {
                 // Deploy the Docker image to Tomcat server
@@ -75,3 +74,8 @@ pipeline {
             echo 'Build, custom Docker image push, and Tomcat deployment succeeded!'
         }
     }
+
+
+        }
+        
+ 
