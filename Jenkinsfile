@@ -71,4 +71,3 @@ pipeline {
             echo 'Build, custom Docker image push, and Tomcat deployment succeeded!'
         }
     }
-}
