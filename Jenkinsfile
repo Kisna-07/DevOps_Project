@@ -1,55 +1,49 @@
 pipeline {
     agent any
 
-    tools {
-        // Install the Maven version configured as "M3" and add it to the path.
-        maven "M3"
+    environment {
+        // Define environment variables
+        DOCKER_HUB_CREDENTIALS = credentials('dockerhub')
+        // DOCKER_IMAGE_NAME = 'krushna07/project-demo:v1'
     }
 
     stages {
-
         stage('Checkout') {
             steps {
-                // Get some code from a GitHub repository
-                git branch: 'main',
-                    url: 'https://github.com/Kisna-07/DevOps_Project.git'
+                // Checkout your source code from your version control system
+                checkout scm
             }
         }
-         
-        stage('Build') {
-            
+
+        stage('Build and Package') {
             steps {
-
-                // Run Maven on a Unix agent.
-                sh "mvn -Dmaven.test.failure.ignore=true clean package"
-
-                // To run Maven on a Windows agent, use
-                // bat "mvn -Dmaven.test.failure.ignore=true clean package"
+                // Build your Java Maven application
+                sh 'mvn clean package'
             }
-
         }
 
-        stage('Deploy') {
+        stage('Build Docker Image') {
             steps {
-                echo "deploy stage"
-                deploy adapters: [tomcat9 (
-                    credentialsId: 'tomcat-credentails',
-                    path: '',
-                    url: 'http://20.62.44.175:8088/'
-                )],
-                contextPath: 'Plainview',
-                onFailure: 'false',
-                war: '**/*.war'
-            }
+                sh 'docker build -t krushna07/project-demo:v1 .'
+                // script {
+                //     // Build the Docker image using your Dockerfile
+                //     def dockerImage = docker.build(DOCKER_IMAGE_NAME, "--file Dockerfile .")
 
-            post {
-                // If Maven was able to run the tests, even if some of the test
-                // failed, record the test results and archive the jar file.
-                success {
-                    archiveArtifacts 'target/*.war'
-                }
+                //     // Push the Docker image to DockerHub
+                //     docker.withRegistry('https://registry.hub.docker.com', DOCKER_HUB_CREDENTIALS) {
+                //         dockerImage.push()
+                //     }
+                // }
             }
         }
     }
-}
 
+    post {
+        success {
+            echo 'Docker Image Build Successful!'
+        }
+        failure {
+            echo 'Docker Image Build Failed!'
+        }
+    }
+}
