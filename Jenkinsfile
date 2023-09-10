@@ -4,7 +4,7 @@ pipeline {
     environment {
         // Define environment variables
         DOCKER_HUB_CREDENTIALS = credentials('dockerhub')
-        DOCKER_IMAGE_NAME = 'krushna07/project-demo:v1'
+        // DOCKER_IMAGE_NAME = 'krushna07/project-demo:v1'
     }
 
     stages {
@@ -24,15 +24,16 @@ pipeline {
 
         stage('Build Docker Image') {
             steps {
-                script {
-                    // Build the Docker image using your Dockerfile
-                    def dockerImage = docker.build(DOCKER_IMAGE_NAME, "--file Dockerfile .")
+                sh 'docker build -t krushna07/project-demo:v1 .'
+                // script {
+                //     // Build the Docker image using your Dockerfile
+                //     def dockerImage = docker.build(DOCKER_IMAGE_NAME, "--file Dockerfile .")
 
-                    // Push the Docker image to DockerHub
-                    docker.withRegistry('https://registry.hub.docker.com', DOCKER_HUB_CREDENTIALS) {
-                        dockerImage.push()
-                    }
-                }
+                //     // Push the Docker image to DockerHub
+                //     docker.withRegistry('https://registry.hub.docker.com', DOCKER_HUB_CREDENTIALS) {
+                //         dockerImage.push()
+                //     }
+                // }
             }
         }
     }
