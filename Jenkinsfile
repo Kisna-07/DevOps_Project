@@ -14,7 +14,7 @@ pipeline {
         stage ('Checkout') {
             steps {
                 // Get some code from a GitHub repository
-                git branch: 'main',
+                git branch: 'master',
                     url: 'https://github.com/Kisna-07/DevOps_Project.git'
             }
         }
