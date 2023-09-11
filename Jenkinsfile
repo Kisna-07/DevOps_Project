@@ -1,63 +1,77 @@
+
 pipeline {
     agent any
-    
-    environment {
-        // Define environment variables
-        DOCKER_HUB_CREDENTIALS = credentials('dockerhub')
-        DOCKER_IMAGE_NAME = 'krushna07/project-demo:v1'
-        TOMCAT_SERVER = 'http://20.62.44.175:8088'
-        TOMCAT_CREDENTIALS = credentials('tom-admin')
-        CUSTOM_DOCKERFILE_PATH = '**/Dockerfile'  // Change this path
+
+    tools {
+        // Install the Maven version configured as "M3" and add it to the path.
+        maven "M3"
     }
 
+
+ 
+
     stages {
-        stage('Checkout') {
+        stage ('Checkout') {
             steps {
-                // Check out the source code from Git
-                checkout scm
+                // Get some code from a GitHub repository
+                git branch: 'main',
+                    url: 'https://github.com/Kisna-07/DevOps_Project.git'
             }
         }
-        
-        stage('Build and Test') {
+        stage('Build') {
             steps {
-                // Build and test your Java Maven project
-                sh 'mvn clean package'
+                // Run Maven on a Unix agent.
+                sh "mvn -Dmaven.test.failure.ignore=true clean package"
             }
         }
-        
-        stage('Build Custom Docker Image') {
+        stage('Install') {
             steps {
-                // Build a custom Docker image based on Tomcat
-                script {
-                    docker.build("${DOCKER_IMAGE_NAME}:${BUILD_NUMBER}", "-f ${CUSTOM_DOCKERFILE_PATH} .")
+                sh "mvn install"
+            }
+        }
+        stage ('Deploy') {
+            steps {
+                echo "Deploying"
+                deploy adapters: [tomcat9 (
+                    credentialsId: 'tom-admin',
+                    path: '',
+                    url: 'http://20.62.44.175:8088/'
+                )],
+                contextPath: 'Planview',
+                onFailure: 'false',
+                war: '**/*.war'
+            }
+            post {
+                success {
+                    junit '**/target/surefire-reports/TEST-*.xml'
+                    archiveArtifacts 'target/*.war'
                 }
-                
-                // Authenticate and push the Docker image to Docker Hub
-                withCredentials([usernamePassword(credentialsId: 'dockerhub')]) {
-                    script {
-                        docker.withRegistry("https://registry.hub.docker.com", 'dockerhub') {
-                            dockerImage.push("${DOCKER_IMAGE_NAME}:${BUILD_NUMBER}")
-                        }
+            }
+        }
+
+
+
+        stage('Build Docker Image') {
+            steps {
+                script {
+                    // Build the Docker image from the Dockerfile
+                    sh 'docker build -t krushna07/project-demo .'
+                }
+            }
+        }
+
+ 
+
+        stage('Publish to Docker Hub') {
+            steps {
+                script {
+
+                    docker.withRegistry('https://registry.hub.docker.com', 'dockerhub') {
+                        // Push the Docker image to Docker Hub
+                        docker.image('krushna07/project-demo').push()
                     }
                 }
             }
-        }
-        
-        // stage('Deploy to Tomcat') {
-        //     steps {
-        //         // Deploy the Docker image to Tomcat server
-        //         withCredentials([usernamePassword(credentialsId: 'tom-admin')]) {
-        //             sh """
-        //             curl -T target/your-web-app.war http://${TOMCAT_USERNAME}:${TOMCAT_PASSWORD}@${TOMCAT_SERVER}/manager/text/deploy?path=/your-app-context&update=true
-        //             """
-        //         }
-        //     }
-        // }
-    }
-    
-    post {
-        success {
-            echo 'Build, custom Docker image push, and Tomcat deployment succeeded!'
         }
     }
 }
